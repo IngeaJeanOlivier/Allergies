@@ -5,6 +5,7 @@ Script d'extraction automatisé depuis data.gouv.fr
 Gestion des erreurs, logs, vérification d'intégrité.
 """
 
+import os
 import sys
 import logging
 import requests
@@ -141,13 +142,15 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
 # Point d'entrée du module - collecte des données de façon automatisée
 # ---------------------------------------------------------------------------
 def do_collect():
-    ok_allergies = download_file(url=url_allergies, dest=allergies_filepath)
+    allergies_path = Path(allergies_filepath)
+    ok_allergies = download_file(url=url_allergies, dest=allergies_path)
     if ok_allergies:
         logger.info("Fichier allergies OK")
     else:
         logger.warning("Erreur lors du téléchargement du fichier des allergies")
 
-    ok_allergenes = scrape_file(url=url_allergen_description, dest=allergens_filepath)
+    allergens_path = Path(allergens_filepath)
+    ok_allergenes = scrape_file(url=url_allergen_description, dest=allergens_path)
     if ok_allergenes:
         logger.info("Fichier allergènes OK")
     else:
