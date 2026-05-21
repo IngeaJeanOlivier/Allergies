@@ -120,7 +120,7 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
             rows.append(all_a_contents)
         # Writing down our data-file
         df = pd.DataFrame(rows, columns=["allergen", "name", "molecular_mass", "route"])
-        df.to_csv(path_or_buf=dest)
+        df.to_csv(path_or_buf=dest, index=False)
         nb_rows = len(rows)
         logger.info(f"  ✓ Téléchargé : {dest.name} ({nb_rows} rows)")
         return True
