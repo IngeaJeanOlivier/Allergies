@@ -20,6 +20,57 @@ allergens_filepath = "../data/allergens.csv"
 # CLEAN files
 allergies_clean_filepath = "../data/allergies_clean.csv"
 
+# Dictionnaires utilitaires à la préparation des données
+d_age_apparition = {
+        9:"Non renseigné",
+        0:"Aucun",
+        1:"0 - 2 ans",
+        2:"0 - 2 ans",
+        3:"2 - 3 ans",
+        4:"3 - 10 ans",
+        5:"10 - 20 ans",
+        6:"20 ans et plus"
+}
+
+d_traitement_actuel_da = {
+        9:"Non renseigné",
+        0:"Pas de traitement",
+        1:"Emollients",
+        2:"Dermocorticoïdes",
+        3:"Autres",
+        4:"Ciclosporine",
+        5:"Dupilumab",
+        6:"Upadacitinib",
+        7:"Autres"
+}
+
+d_facteurs = {
+        9: "Non renseigné",
+        0: "Aucun",
+        1: "Effort/Activité sportive",
+        2: "AINS",
+        3: "Alcool",
+        4: "Moisissures",
+        5: "Acariens",
+        6: "Animaux : chat",
+        7: "Animaux : chien",
+        8: "Animaux : cheval/rongeur",
+        10: "Animaux : cheval/rongeur",
+        11: "Mucoviscidose",
+        12: "IPP"
+}
+
+d_traitement_rhinite = {
+        9: "Non renseigné",
+        0: "Aucun",
+        1: "Anti-H1, voie locale",
+        2: "Anti-H1 voie générale",
+        3: "Anti-H1 + CS voie locale",
+        4: "CS voie générale"
+
+}
+
+
 
 # ---------------------------------------------------------------------------
 # Logging - chaque execution crée un nouveau fichier de log
@@ -85,16 +136,27 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     # Correctifs sur les colonnes ayant 1, 0, 9 pour (oui, non, non connu) :
 
-    df2["Treatment_of_rhinitis"] = df2["Treatment_of_rhinitis"].apply(lambda z:int(z))
-
     df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: int(z) if str(z).isnumeric() else 1)
     df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: z if (z==0) or (z==9) else 1)
 
     # Correctifs sur les colonnes ayant 0, 1, 2, ..., N (catégories) :
 
+    df2["Treatment_of_rhinitis"] = df2["Treatment_of_rhinitis"].apply(lambda z:int(z))
+
     df2["General_cofactors"] = df2["General_cofactors"].apply(lambda z: int(z.split(",")[0]) if type(z)!=int else z)
 
     df2["Treatment_of_atopic_dematitis"] = df2["Treatment_of_atopic_dematitis"].apply(lambda z: int(z.split(",")[0]) if type(z)!=int else z)
+
+    df2["Age_of_onsets"] = df2["Age_of_onsets"].apply(lambda z: int(z.split(",")[0]) if type(z)!=int else z)
+
+    # Application du dictionnaire : rhinite, facteurs et dermatite atopique et age d'apparition des symptômes
+    df2["Treatment_of_rhinitis"] = df2["Treatment_of_rhinitis"].apply(lambda z: d_traitement_rhinite.get(z, z))
+
+    df2["General_cofactors"] = df2["General_cofactors"].apply(lambda z: d_facteurs.get(z, z))
+
+    df2["Treatment_of_atopic_dematitis"] = df2["Treatment_of_atopic_dematitis"].apply(lambda z: d_traitement_actuel_da.get(z, z))
+
+    df2["Age_of_onsets"] = df2["Age_of_onsets"].apply(lambda z: d_age_apparition.get(z, z))
 
     # Fichier clean
     df2.to_csv(path_or_buf=dest, index=False)

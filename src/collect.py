@@ -30,6 +30,13 @@ url_allergen_description = "https://allergen.org/search.php?allergenname=&allerg
 
 allergens_filepath = "../data/allergens.csv"
 
+# Quoi : obtenir les données complémentaires du dictionnaire (relatif aux allergies)
+# /api/resources/a75c21e9-4a7b-417d-b998-7a3c6b3da3cd/data/csv/ (soit csv soit json, sinon xls)
+
+id_data_dictionnaire = "a75c21e9-4a7b-417d-b998-7a3c6b3da3cd"
+url_dictionnaire = base_url_allergies + "/resources/" + id_data_dictionnaire + "/data/"
+dictionnaire_filepath = "../data/acc-dictionnaire.xls"
+
 timeout = 60
 
 # ---------------------------------------------------------------------------
@@ -142,6 +149,7 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
 # Point d'entrée du module - collecte des données de façon automatisée
 # ---------------------------------------------------------------------------
 def do_collect():
+    # Fichier principal : allergies
     allergies_path = Path(allergies_filepath)
     ok_allergies = download_file(url=url_allergies, dest=allergies_path)
     if ok_allergies:
@@ -149,6 +157,19 @@ def do_collect():
     else:
         logger.warning("Erreur lors du téléchargement du fichier des allergies")
 
+    # Fichiers complémentaires : dictionnaire, allergènes
+
+    # Dictionnaire (le fichier n'est jamais au bon format)
+    '''
+    dictionnaire_path = Path(dictionnaire_filepath)
+    ok_dictionnaire = download_file(url=url_dictionnaire, dest=dictionnaire_path)
+    if ok_dictionnaire:
+        logger.info("Fichier dictionnaire OK")
+    else:
+        logger.warning("Erreur lors du téléchargement du fichier dictionnaire")
+    '''
+
+    # Allergènes
     allergens_path = Path(allergens_filepath)
     ok_allergenes = scrape_file(url=url_allergen_description, dest=allergens_path)
     if ok_allergenes:
