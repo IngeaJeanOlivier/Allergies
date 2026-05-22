@@ -65,8 +65,8 @@ d_traitement_rhinite = {
         0: "Aucun",
         1: "Anti-H1, voie locale",
         2: "Anti-H1 voie générale",
-        3: "Anti-H1 + CS voie locale",
-        4: "CS voie générale"
+        3: "Anti-H1 + CS",
+        4: "Anti-H1 + CS"
 
 }
 
@@ -132,9 +132,13 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     df2 = df.dropna(axis=0, how="any")
 
+    # Pas besoin de garder "__id"
     # Nous n'allons pas regarder les détails au niveau du département. Il y a de toute façon une anonymisation des départements et régions.
 
-    df2 = df2.drop(columns=["French_Residence_Department"])
+    df2 = df2.drop(columns=["__id", "French_Residence_Department"])
+
+    # Simple renommage de French_Region
+    df2.rename(columns={"French_Region": "Region"}, inplace=True)
 
     # Application de catégories sur l'âge :
     df2["Age"] = df2["Age"].apply(lambda z: age_to_categories(z))

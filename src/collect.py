@@ -39,6 +39,11 @@ dictionnaire_filepath = "../data/acc-dictionnaire.xls"
 
 timeout = 60
 
+# DATA folter : doit être présent, sinon il est créé automatiquement
+# Contrôle existance dossier "data" :
+if not os.path.exists("../data"):
+    os.mkdir("../data")
+
 # ---------------------------------------------------------------------------
 # Logging - chaque execution crée un nouveau fichier de log
 # ---------------------------------------------------------------------------
@@ -149,6 +154,7 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
 # Point d'entrée du module - collecte des données de façon automatisée
 # ---------------------------------------------------------------------------
 def do_collect():
+
     # Fichier principal : allergies
     allergies_path = Path(allergies_filepath)
     ok_allergies = download_file(url=url_allergies, dest=allergies_path)
