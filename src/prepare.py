@@ -48,16 +48,16 @@ d_facteurs = {
         9: "Non renseigné",
         0: "Aucun",
         1: "Effort/Activité sportive",
-        2: "AINS",
+        2: "Autres",
         3: "Alcool",
         4: "Moisissures",
         5: "Acariens",
-        6: "Animaux : chat",
-        7: "Animaux : chien",
+        6: "Animaux : chat/chien",
+        7: "Animaux : chat/chien",
         8: "Animaux : cheval/rongeur",
         10: "Animaux : cheval/rongeur",
-        11: "Mucoviscidose",
-        12: "IPP"
+        11: "Autres",
+        12: "Autres"
 }
 
 d_traitement_rhinite = {
@@ -70,6 +70,16 @@ d_traitement_rhinite = {
 
 }
 
+# Fonction utilitaire pour l'âge
+def age_to_categories(a: int) -> str:
+    if a<20:
+        return "0 à 20"
+    elif a<40:
+        return "20 à 40"
+    elif a<60:
+        return "40 à 60"
+    else:
+        return "60 à Plus"
 
 
 # ---------------------------------------------------------------------------
@@ -126,6 +136,9 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     df2 = df2.drop(columns=["French_Residence_Department"])
 
+    # Application de catégories sur l'âge :
+    df2["Age"] = df2["Age"].apply(lambda z: age_to_categories(z))
+
     # Correctifs sur les colonnes Oui / Non (t / f) : les valeurs seront 1 ou 0.
 
     df2["Gender"] = df2["Gender"].apply(lambda z: int(1) if z=="t" else int(0))
@@ -134,10 +147,17 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
     df2["Sensitization"] = df2["Sensitization"].apply(lambda z: int(1) if z=="t" else int(0))
     df2["Sensitization"] = df2["Sensitization"].astype("int64")
 
-    # Correctifs sur les colonnes ayant 1, 0, 9 pour (oui, non, non connu) :
+    # Simplification de la colonne Rural_or_urban_area (1, 0, 9), on ne gardera que (1, 0) :
+    df2["Rural_or_urban_area"] = df2["Rural_or_urban_area"].apply(lambda z: 1 if int(z)==1 else 0)
+    df2.rename(columns={"Rural_or_urban_area": "Urban_area"}, inplace=True)
 
-    df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: int(z) if str(z).isnumeric() else 1)
-    df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: z if (z==0) or (z==9) else 1)
+    # Simplification pour la colonne Treatment_of_athsma (1, 0, 9), on ne gardera que (1, 0) :
+    df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: int(str(z).split(",")[0]))
+    df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: 1 if ((z!=0) and (z!=9)) else 0)
+    df2.rename(columns={"Treatment_of_athsma": "Treatment_of_asthma"}, inplace=True)
+
+    # Simplification pour la colonne Skin_Symptoms (1, 0, 9), on ne gardera que (1, 0) :
+    df2["Skin_Symptoms"] = df2["Skin_Symptoms"].apply(lambda z: 1 if z==1 else 0)
 
     # Correctifs sur les colonnes ayant 0, 1, 2, ..., N (catégories) :
 
