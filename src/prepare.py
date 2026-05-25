@@ -35,12 +35,12 @@ d_age_apparition = {
 d_traitement_actuel_da = {
         9:"Non renseigné",
         0:"Pas de traitement",
-        1:"Emollients",
+        1:"Autres",
         2:"Dermocorticoïdes",
         3:"Autres",
-        4:"Ciclosporine",
+        4:"Autres",
         5:"Dupilumab",
-        6:"Upadacitinib",
+        6:"Autres",
         7:"Autres"
 }
 
@@ -49,7 +49,7 @@ d_facteurs = {
         0: "Aucun",
         1: "Effort/Activité sportive",
         2: "Autres",
-        3: "Alcool",
+        3: "Autres",
         4: "Moisissures",
         5: "Acariens",
         6: "Animaux : chat/chien",
