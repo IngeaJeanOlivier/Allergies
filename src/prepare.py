@@ -19,6 +19,7 @@ allergens_filepath = "../data/allergens.csv"
 
 # CLEAN files
 allergies_clean_filepath = "../data/allergies_clean.csv"
+allergies_clean_categories_filepath = "../data/allergies_clean_categories.csv"
 
 # Dictionnaires utilitaires à la préparation des données
 d_age_apparition = {
@@ -190,5 +191,127 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     return True
 
+# ---------------------------------------------------------------------------
+# Nettoyage des données allergies, avec des regroupements des colonnes d'analyses médicales
+# ---------------------------------------------------------------------------
+
+def clean_data_allergies_categories(source: Path, dest: Path) -> bool:
+    """
+    Nettoyage des données allergies
+    """
+
+    logger.info(f"Nettoyage : {source.name}")
+
+    # ==========================================
+    # 1. CHARGEMENT DES DONNÉES
+    # ==========================================
+
+    # Chargement du tableau principal (avec les patients et les scores d'IgE)
+    # On spécifie le séparateur ';' propre à votre fichier
+    
+    df = pd.read_csv(filepath_or_buffer=source)
+
+    # ==========================================
+    # 2. CRÉATION DU MAPPING (ACRONYME -> CATÉGORIE)
+    # ==========================================
+
+    # /!\ ÉTAPE À ADAPTER SELON VOTRE DICTIONNAIRE /!\
+    # Ici, nous créons manuellement un dictionnaire de correspondance basé sur les standards ISAC.
+    # Etant donné qu'on ne pouvait lire automatiquement le fichier du dictionnaire, il est repris ici
+    mapping_categories = {
+        # POLLENS D'ARBRES
+        'Aln_g_1': 'Pollens', 'Bet_v_1': 'Pollens', 'Bet_v_2': 'Pollens', 'Bet_v_4': 'Pollens',
+        'Cup_a_1': 'Pollens', 'Ole_e_1': 'Pollens', 'Ole_e_7': 'Pollens', 'Ole_e_9': 'Pollens',
+        'Cor_a_1.0101': 'Pollens', 'Cor_a_1.0401': 'Pollens',
+        
+        # GRAMINÉES ET HERBACÉES
+        'Amb_a_1': 'Pollens', 'Art_v_1': 'Pollens', 'Art_v_3': 'Pollens',
+        'Phl_p_1': 'Pollens', 'Phl_p_2': 'Pollens', 'Phl_p_4': 'Pollens', 'Phl_p_5': 'Pollens',
+        'Phl_p_6': 'Pollens', 'Phl_p_7': 'Pollens', 'Phl_p_11': 'Pollens', 'Phl_p_12': 'Pollens',
+        'Che_a_1': 'Pollens', 'Par_j_2': 'Pollens',
+
+        # ALIMENTS (Fruits, Légumes, Graines)
+        'Act_d_1': 'Aliments', 'Act_d_2': 'Aliments', 'Act_d_5': 'Aliments', 'Act_d_8': 'Aliments',
+        'Ana_o_2': 'Aliments', 'Api_g_1': 'Aliments', 
+        'Ara_h_1': 'Aliments', 'Ara_h_2': 'Aliments', 'Ara_h_3': 'Aliments', 'Ara_h_6': 'Aliments', 'Ara_h_8': 'Aliments', 'Ara_h_9': 'Aliments',
+        'Ber_e_1': 'Aliments', 'Cor_a_8': 'Aliments', 'Cor_a_9': 'Aliments', 'Cor_a_14': 'Aliments',
+        'Gly_m_4': 'Aliments', 'Gly_m_5': 'Aliments', 'Gly_m_6': 'Aliments',
+        'Mal_d_1': 'Aliments', 'Pru_p_3': 'Aliments', 'Ses_i_1': 'Aliments', 'Sin_a_1': 'Aliments',
+        
+        # PRODUITS ANIMAUX (Lait, Œuf, Viande, Poisson)
+        'Bos_d_4': 'Aliments', 'Bos_d_5': 'Aliments', 'Bos_d_6': 'Aliments', 'Bos_d_8': 'Aliments', 'Bos_d_Lactoferrin': 'Aliments',
+        'Gal_d_1': 'Aliments', 'Gal_d_2': 'Aliments', 'Gal_d_3': 'Aliments', 'Gal_d_5': 'Aliments',
+        'Gad_m_1': 'Aliments', 'Pen_m_1': 'Aliments', 'Pen_m_2': 'Aliments', 'Pen_m_4': 'Aliments',
+        
+        # ANIMAUX DOMESTIQUES
+        'Can_f_1': 'Animaux', 'Can_f_2': 'Animaux', 'Can_f_3': 'Animaux', 'Can_f_5': 'Animaux', 'Can_f_6': 'Animaux',
+        'Fel_d_1': 'Animaux', 'Fel_d_2': 'Animaux', 'Fel_d_4': 'Animaux', 'Fel_d_7': 'Animaux',
+        'Equ_c_1': 'Animaux', 'Mus_m_1': 'Animaux',
+
+        # ACARIENS ET BLATTES
+        'Der_f_1': 'Acariens/Blattes', 'Der_f_2': 'Acariens/Blattes',
+        'Der_p_1': 'Acariens/Blattes', 'Der_p_2': 'Acariens/Blattes', 'Der_p_10': 'Acariens/Blattes',
+        'Bla_g_1': 'Acariens/Blattes', 'Bla_g_2': 'Acariens/Blattes', 'Bla_g_5': 'Acariens/Blattes', 'Bla_g_7': 'Acariens/Blattes',
+        'Blo_t_5': 'Acariens/Blattes', 'Lep_d_2': 'Acariens/Blattes',
+
+        # MOISISSURES, VENINS ET LATEX
+        'Alt_a_1': 'Moisissures/Autres', 'Alt_a_6': 'Moisissures/Autres',
+        'Asp_f_1': 'Moisissures/Autres', 'Asp_f_3': 'Moisissures/Autres', 'Asp_f_6': 'Moisissures/Autres',
+        'Cla_h_8': 'Moisissures/Autres', 'Pen_c_3': 'Moisissures/Autres',
+        'Api_m_1': 'Moisissures/Autres', 'Api_m_4': 'Moisissures/Autres',
+        'Vesp_v_1': 'Moisissures/Autres', 'Vesp_v_5': 'Moisissures/Autres',
+        'Hev_b_1': 'Moisissures/Autres', 'Hev_b_3': 'Moisissures/Autres', 'Hev_b_5': 'Moisissures/Autres', 'Hev_b_6.02': 'Moisissures/Autres',
+        'Ani_s_1': 'Moisissures/Autres', 'Ani_s_3': 'Moisissures/Autres',
+        'Hom_s_LF': 'Moisissures/Autres'
+    }
+
+
+    # ==========================================
+    # 3. NETTOYAGE ET CONVERSION DES DONNÉES
+    # ==========================================
+
+    # Identification des colonnes de métadonnées des patients (à ne pas sommer)
+    colonnes_metadonnees = [
+        'Patient_ID', 'Chip_Type', 'Age', 'Gender', 'Blood_Month_sample',
+        'Region', 'Urban_area',
+        'Sensitization', 'Treatment_of_rhinitis', 'Treatment_of_asthma',
+        'Age_of_onsets', 'Skin_Symptoms', 'General_cofactors', 'Treatment_of_atopic_dematitis'
+    ]
+
+    # Sélectionner uniquement les colonnes d'allergènes présentes dans le fichier principal
+    colonnes_allergenes_presentes = [col for col in df.columns if col in mapping_categories]
+
+    # Création d'une copie propre pour travailler
+    df_clean = df.copy()
+
+    # ==========================================
+    # 4. AGRÉGATION PAR CATÉGORIE
+    # ==========================================
+
+    # Extraction des métadonnées des patients
+    df_final = df_clean[colonnes_metadonnees].copy()
+
+    # Groupement horizontal (axis=1) des allergènes par leur catégorie en calculant la SOMME
+    # (Vous pouvez remplacer .sum() par .max() si vous voulez le score maximal de la catégorie)
+    df_categories_somme = df_clean[colonnes_allergenes_presentes].groupby(mapping_categories, axis=1).sum()
+
+    # Fusion des métadonnées et des scores par grandes catégories
+    df_resultat_complet = pd.concat([df_final, df_categories_somme], axis=1)
+
+
+    # ==========================================
+    # 5. EXPORT
+    # ==========================================
+    
+    # Sauvegarde du nouveau tableau dans un fichier CSV bien propre
+    df_resultat_complet.to_csv(dest, index=False)
+
+    nb_rows = df_resultat_complet.shape[0]
+    logger.info(f"  ✓ Nettoyé : {dest.name} ({nb_rows} rows)")
+
+    return True
+
+
 if __name__ == "__main__":
     clean_data_allergies(Path(allergies_filepath), Path(allergies_clean_filepath))
+    clean_data_allergies_categories(Path(allergies_clean_filepath), Path(allergies_clean_categories_filepath))

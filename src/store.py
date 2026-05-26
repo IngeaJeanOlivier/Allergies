@@ -12,6 +12,7 @@ from pathlib import Path
 
 # CLEAN files
 allergies_clean_filepath = "../data/allergies_clean.csv"
+allergies_clean_categories_filepath = "../data/allergies_clean_categories.csv"
 
 # Database file path
 db_filepath = "../data/allergen_chip_challenge.db"
@@ -51,6 +52,23 @@ def store_data_allergies(source: Path, conn):
     )
 
 # ---------------------------------------------------------------------------
+# Stockage de la table allergies par catégories
+# ---------------------------------------------------------------------------
+
+def store_data_allergies_categories(source: Path, conn):
+
+    logger.info(f"Stockage en base : {source.name}")
+    df = pd.read_csv(filepath_or_buffer=source)
+
+   # Save dataframe as SQL table
+    df.to_sql(
+        name="allergies_categories",      # table name
+        con=conn,
+        if_exists="replace",  # options: fail, replace, append
+        index=False
+    )
+
+# ---------------------------------------------------------------------------
 # Stockage de toutes les tables, vers la base SQLite
 # ---------------------------------------------------------------------------
 
@@ -62,6 +80,7 @@ def store_all():
     try:
         # Ici, on appelle une procédure pour chaque table à stocker :
         store_data_allergies(Path(allergies_clean_filepath), conn)
+        store_data_allergies_categories(Path(allergies_clean_categories_filepath), conn)
     except Exception as e:
         logger.error(f"Erreur : {e}")
     finally:
