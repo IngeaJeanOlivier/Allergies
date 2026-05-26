@@ -115,13 +115,13 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
 
         # Status OK
         rows = []
-        soup = BeautifulSoup(response.text)
+        soup = BeautifulSoup(response.text, "html.parser")
         all_tr = soup.find_all("tr")
         rows_len = len(all_tr)
         for i in range(4, rows_len):
             tr = all_tr[i]
             # Working on a single row
-            soup2 = BeautifulSoup(str(tr))
+            soup2 = BeautifulSoup(str(tr), "html.parser")
             all_a = soup2.find_all("td")
             all_a_contents = [z.contents for z in all_a]
             all_a_contents = all_a_contents[1:5]
