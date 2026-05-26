@@ -45,7 +45,7 @@ if not os.path.exists("../data"):
     os.mkdir("../data")
 
 # ---------------------------------------------------------------------------
-# Logging - chaque execution crée un nouveau fichier de log
+# Logging - chaque execution crée un nouveau fichier de log pour verification du bon deroulement
 # ---------------------------------------------------------------------------
 
 log_file = f"../data/collect_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
