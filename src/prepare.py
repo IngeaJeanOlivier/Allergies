@@ -134,7 +134,7 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     df2 = df.dropna(axis=0, how="any")
 
-    # Pas besoin de garder "__id"
+    # Pas besoin de garder "__id", chaque patient possède déjà un identifiant que nous allons garder.
     # Nous n'allons pas regarder les détails au niveau du département. Il y a de toute façon une anonymisation des départements et régions.
 
     df2 = df2.drop(columns=["__id", "French_Residence_Department"])
