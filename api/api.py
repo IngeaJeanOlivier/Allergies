@@ -22,7 +22,7 @@ class Patient(BaseModel):
     Gender: int
     Blood_Month_sample: float
     Region: str
-    Urban_area: int
+    Rural_area: int
     Sensitization: int
     Treatment_of_rhinitis: str
     Treatment_of_asthma: int
