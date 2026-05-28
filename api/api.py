@@ -3,9 +3,10 @@ API de diffusion des données sur les allergies, extraits de la base SQLite
 Contrôle de clés d'API, gestion des erreurs, logs, vérifications
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi import FastAPI, HTTPException, Depends, Security, Query
 from fastapi.security.api_key import APIKeyHeader
 import sqlite3
+from contextlib import contextmanager
 
 from pydantic import BaseModel, Field
 
@@ -92,6 +93,22 @@ async def verify_api_key(api_key: str = Security(api_key_header)):
     return api_key
 
 
+@contextmanager
+def get_db():
+    """Gestionnaire de contexte pour la connexion SQLite."""
+    conn = sqlite3.connect("../data/allergen_chip_challenge.db")
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+def query_db(sql: str, params: tuple = ()) -> list[dict]:
+    """Exécute une requête et retourne une liste de dicts."""
+    with get_db() as conn:
+        df = pd.read_sql(sql, conn, params=params)
+    return df.to_dict(orient="records")
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Data API!"}
@@ -132,3 +149,26 @@ async def get_patient(patient_id: str):
             return patient
     raise HTTPException(status_code=404, detail="Patient not found")
 
+
+@app.get(
+    "/stats/regions",
+    tags=["Statistiques par région"],
+    summary="Statistiques par région",
+    dependencies=[Depends(verify_api_key)],
+)
+def get_stats_regions(region= Query(default=None, description="Filtrer par region")):
+    """Statistiques agrégées"""
+    condition = "WHERE region = ?" if region else ""
+    params = (region,) if region else ()
+
+    requete_region = query_db(f"""
+    SELECT
+    a.Region,
+    COUNT(*) as nb_patients,
+    AVG(a.Sensitization)*100 as pourcentage_de_sensibilises
+    FROM allergies_categories a
+    {condition}
+    GROUP BY region
+    """, params)
+
+    return requete_region
