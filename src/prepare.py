@@ -153,9 +153,9 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
     df2["Sensitization"] = df2["Sensitization"].apply(lambda z: int(1) if z=="t" else int(0))
     df2["Sensitization"] = df2["Sensitization"].astype("int64")
 
-    # Simplification de la colonne Rural_or_urban_area (1, 0, 9), on ne gardera que (1, 0) :
+    # Simplification de la colonne Rural_or_urban_area (1, 0, 9), on ne gardera que (1, 0) pour indicateur de Ruralité :
     df2["Rural_or_urban_area"] = df2["Rural_or_urban_area"].apply(lambda z: 1 if int(z)==1 else 0)
-    df2.rename(columns={"Rural_or_urban_area": "Urban_area"}, inplace=True)
+    df2.rename(columns={"Rural_or_urban_area": "Rural_area"}, inplace=True)
 
     # Simplification pour la colonne Treatment_of_athsma (1, 0, 9), on ne gardera que (1, 0) :
     df2["Treatment_of_athsma"] = df2["Treatment_of_athsma"].apply(lambda z: int(str(z).split(",")[0]))
@@ -304,7 +304,7 @@ def clean_data_allergies_categories(source: Path, dest: Path) -> bool:
     # Identification des colonnes de métadonnées des patients (à ne pas sommer)
     colonnes_metadonnees = [
         'Patient_ID', 'Chip_Type', 'Age', 'Gender', 'Blood_Month_sample',
-        'Region', 'Urban_area',
+        'Region', 'Rural_area',
         'Sensitization', 'Treatment_of_rhinitis', 'Treatment_of_asthma',
         'Age_of_onsets', 'Skin_Symptoms', 'General_cofactors', 'Treatment_of_atopic_dematitis'
     ]
@@ -322,9 +322,9 @@ def clean_data_allergies_categories(source: Path, dest: Path) -> bool:
     # Extraction des métadonnées des patients
     df_final = df_clean[colonnes_metadonnees].copy()
 
-    # Groupement horizontal (axis=1) des allergènes par leur catégorie en calculant la SOMME
+    # Groupement horizontal (axis=1) des allergènes par leur catégorie en calculant la SOMME ou la MOYENNE
     # (Vous pouvez remplacer .sum() par .max() si vous voulez le score maximal de la catégorie)
-    df_categories_somme = df_clean[colonnes_allergenes_presentes].groupby(mapping_categories, axis=1).sum()
+    df_categories_somme = df_clean[colonnes_allergenes_presentes].groupby(mapping_categories, axis=1).mean()
 
     # Fusion des métadonnées et des scores par grandes catégories
     df_resultat_complet = pd.concat([df_final, df_categories_somme], axis=1)
