@@ -84,6 +84,13 @@ def age_to_categories(a: int) -> str:
     else:
         return "60 à Plus"
 
+# Fonction utilitaire pour la région (surtout pour les 5 régions qui ont très peu de patients)
+def region_regroup(r: str) -> str:
+    if r in ["regionE", "regionG", "regionH", "regionK", "regionN"]:
+        # Si des régions ont moins de 12 patients (ou 12 tout juste), alors on regroupe.
+        return "regionEGHKN"
+    else:
+        return r
 
 # ---------------------------------------------------------------------------
 # Logging - chaque execution crée un nouveau fichier de log
@@ -141,6 +148,9 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     # Simple renommage de French_Region
     df2.rename(columns={"French_Region": "Region"}, inplace=True)
+
+    # Attention : certaines régions ont seulement 12 patients ou moins, alors nous les regroupons
+    df2["Region"] = df2["Region"].apply(lambda z: region_regroup(z))
 
     # Application de catégories sur l'âge :
     df2["Age"] = df2["Age"].apply(lambda z: age_to_categories(z))
