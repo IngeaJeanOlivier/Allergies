@@ -96,7 +96,7 @@ def region_regroup(r: str) -> str:
 # Logging - chaque execution crée un nouveau fichier de log
 # ---------------------------------------------------------------------------
 
-log_file = f"../data/collect_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_file = f"../data/prepare_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 logging.basicConfig(
     level=logging.INFO,
