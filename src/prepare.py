@@ -114,7 +114,8 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     df = pd.read_csv(filepath_or_buffer=source)
 
-    # Dans certaines colonnes, parfois la réaction à l'allergène n'est pas saisie, on remplacera alors les valeurs nulles par zero.
+    # Dans certaines colonnes, parfois la réaction à l'allergène n'est pas saisie, 
+    # on remplacera alors les valeurs nulles par zero.
     lst_col = []
     lst_col_replace_na = []
     r = df.shape[0]
@@ -127,7 +128,8 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
 
     lst_col.sort(reverse=True)
 
-    # Lorsque le test n'a pas de résultat saisi, on met par défaut zero (pour pas de réaction à l'allergène)
+    # Lorsque le test n'a pas de résultat saisi, on met par défaut 
+    # zero (pour pas de réaction à l'allergène)
     df[lst_col_replace_na] = df[lst_col_replace_na].fillna(value=0)
 
     # Il reste très peu de valeurs nulles, on enlève les lignes correspondantes.
@@ -135,7 +137,8 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
     df2 = df.dropna(axis=0, how="any")
 
     # Pas besoin de garder "__id", chaque patient possède déjà un identifiant que nous allons garder.
-    # Nous n'allons pas regarder les détails au niveau du département. Il y a de toute façon une anonymisation des départements et régions.
+    # Nous n'allons pas regarder les détails au niveau du département. Il y a de toute façon une 
+    # anonymisation des départements et régions.
 
     df2 = df2.drop(columns=["__id", "French_Residence_Department"])
 
@@ -153,7 +156,9 @@ def clean_data_allergies(source: Path, dest: Path) -> bool:
     df2["Sensitization"] = df2["Sensitization"].apply(lambda z: int(1) if z=="t" else int(0))
     df2["Sensitization"] = df2["Sensitization"].astype("int64")
 
-    # Simplification de la colonne Rural_or_urban_area (1, 0, 9), on ne gardera que (1, 0) pour indicateur de Ruralité :
+    # Simplification de la colonne Rural_or_urban_area (1, 0, 9), on ne gardera que (1, 0) 
+    # pour indicateur de Ruralité :
+    
     df2["Rural_or_urban_area"] = df2["Rural_or_urban_area"].apply(lambda z: 1 if int(z)==1 else 0)
     df2.rename(columns={"Rural_or_urban_area": "Rural_area"}, inplace=True)
 
