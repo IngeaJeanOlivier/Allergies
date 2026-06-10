@@ -21,7 +21,7 @@ db_filepath = "../data/allergen_chip_challenge.db"
 # Logging - chaque execution crée un nouveau fichier de log
 # ---------------------------------------------------------------------------
 
-log_file = f"../data/collect_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_file = f"../data/store_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 logging.basicConfig(
     level=logging.INFO,
