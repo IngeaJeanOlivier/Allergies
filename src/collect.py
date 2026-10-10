@@ -103,7 +103,7 @@ def download_file(url: str, dest: Path, timeout: int = 60) -> bool:
 # Download using SCRAPING - chaque execution crée un nouveau fichier de log
 # ---------------------------------------------------------------------------
 
-def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
+def scrape_file_OLD(url: str, dest: Path, timeout: int = 60) -> bool:
     """
     Télécharge un fichier avec gestion des erreurs HTTP et réseau.
     Retourne True si succès, False sinon.
@@ -131,8 +131,79 @@ def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
             all_a_contents[0] = z[z_start:-4]
             rows.append(all_a_contents)
         # Writing down our data-file
-        df = pd.DataFrame(rows, columns=["allergen", "name", "molecular_mass", "route"])
+        #df = pd.DataFrame(rows, columns=["allergen", "name", "molecular_mass", "route"])
+        df = pd.DataFrame(rows, columns=["Allergen", "Biochemical name", "Molecular mass", "Route of exposure"])
         df.to_csv(path_or_buf=dest, index=False)
+        nb_rows = len(rows)
+        logger.info(f"  ✓ Téléchargé : {dest.name} ({nb_rows} rows)")
+        return True
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"  ✗ Erreur HTTP {e.response.status_code} : {url}")
+        return False
+    except requests.exceptions.ConnectionError:
+        logger.error(f"  ✗ Erreur de connexion : impossible d'atteindre {url}")
+        return False
+    except requests.exceptions.Timeout:
+        logger.error(f"  ✗ Timeout ({timeout}s) dépassé pour : {url}")
+        return False
+    except Exception as e:
+        logger.error(f"  ✗ Erreur inattendue : {e}")
+        return False
+
+def scrape_file(url: str, dest: Path, timeout: int = 60) -> bool:
+    """
+    Télécharge un fichier avec gestion des erreurs HTTP et réseau.
+    Retourne True si succès, False sinon.
+    """
+    logger.info(f"Scraping : {url}")
+    try:
+        
+        response = requests.get(url, timeout=timeout, stream=True)
+        response.raise_for_status()
+
+        # Status OK
+        rows = []
+        soup = BeautifulSoup(response.text, "html.parser")
+        all_tr = soup.find_all("tr")
+
+        # Colonnes du tableau Allergen.org
+        columns = [
+            "Species",
+            "allergen",
+            "name",
+            "molecular_mass",
+            "route",
+            "Created",
+            "Last updated",
+        ]
+
+        # Parcours des lignes du tableau
+        for tr in all_tr:
+            cells = tr.find_all("td", recursive=False)
+
+            # Ignorer les lignes qui ne contiennent pas 7 cellules
+            if len(cells) < 7:
+                continue
+
+            # Extraire le texte de chaque cellule
+            values = [
+                cell.get_text(" ", strip=True)
+                for cell in cells[:7]
+            ]
+
+            rows.append(values)
+
+        # Création du DataFrame
+        df = pd.DataFrame(rows, columns=columns)
+
+        # Écriture du fichier CSV
+        df.to_csv(
+            path_or_buf=dest,
+            index=False,
+            encoding="utf-8-sig"
+        )
+
         nb_rows = len(rows)
         logger.info(f"  ✓ Téléchargé : {dest.name} ({nb_rows} rows)")
         return True
